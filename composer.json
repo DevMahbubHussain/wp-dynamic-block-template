@@ -1,0 +1,20 @@
+{
+    "name": "new/mh-dynamic-block",
+    "description": "BoilerPlate of Gutentberg",
+    "type": "wordpress-plugin",
+    "version": "1.00",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "DevMahbubHussain",
+            "email": "devmahbubmamun@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "App\\": "includes/"
+        }
+    },
+    "require": {}
+}
