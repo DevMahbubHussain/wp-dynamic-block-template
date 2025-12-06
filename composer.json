@@ -1,6 +1,6 @@
 {
-    "name": "new/mh-dynamic-block",
-    "description": "BoilerPlate of Gutentberg",
+    "name": "new/woo-builder",
+    "description": "WooCommerce Builder",
     "type": "wordpress-plugin",
     "version": "1.00",
     "license": "MIT",

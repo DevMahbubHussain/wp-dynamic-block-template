@@ -1,15 +1,15 @@
 <?php
 /**
- * Plugin Name:       WP Gutenberg BoilerPlate
- * Description:       BoilerPlate of Gutenberg
+ * Plugin Name:       WooCommerce Block Builder
+ * Description:       WooCommerce Block Builder
  * Version:           0.1.0
  * Requires at least: 6.7
  * Requires PHP:      7.4
  * Author:            Mahbub Hussain
  * License:           GPL-2.0-or-later
- * Text Domain:       mh-academy
+ * Text Domain:       woo-builder
  *
- * @package MhAcademy
+ * @package WooBuuilder
  */
 
 use App\Plugin;

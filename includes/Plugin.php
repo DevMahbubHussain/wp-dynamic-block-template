@@ -46,5 +46,7 @@ final class Plugin
     {
         $hooks = new Hooks();
         $hooks->register_blocks();
+        $notice = new Notice(__FILE__);
+        $notice->register();
     }
 }

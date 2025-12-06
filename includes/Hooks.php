@@ -14,5 +14,7 @@ class Hooks{
     public function register_blocks(){
        $block_manager = new BlockManager();
        $block_manager->register_blocks();
+       $block_category = new BlockCategory();
+       $block_category->register();
     }
 }

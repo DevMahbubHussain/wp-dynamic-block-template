@@ -4,7 +4,7 @@
 	"name": "my-plugin/mh-dynamic-block",
 	"version": "0.1.0",
 	"title": "Example Dynamic",
-	"category": "widgets",
+	"category": "woo-builder",
 	"icon": "smiley",
 	"description": "Example block scaffolded with Create Block tool.",
 	"example": {},
