@@ -4,13 +4,16 @@ import {
 	ToggleControl,
 	SelectControl,
 	RangeControl,
-	Spinner, // Used for the loading state
-	BaseControl,
+	Spinner,
 } from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
-import apiFetch from "@wordpress/api-fetch";
-import { useState, useEffect } from "@wordpress/element";
+
+// IMPORTS FROM NEW FILES
+import useCategoriesData from "./hooks/useCategoriesData";
+import { getFilteredCategories } from "./utils/categoryUtils";
+import CategorySelectControl from "./components/CategorySelectControl";
 import CategorySkeleton from "./components/CategorySkeleton";
+import CategoryPlaceholder from "../components/CategoryPlaceholder";
 
 // --- EDIT FUNCTION START ---
 const Edit = ({ attributes, setAttributes }) => {
@@ -29,141 +32,35 @@ const Edit = ({ attributes, setAttributes }) => {
 		excludeCategories,
 		paginationType,
 		scrollThreshold,
+		placeholderBehavior,
+		customPlaceholderUrl,
 	} = attributes;
 
 	const blockProps = useBlockProps();
 
 	// ---------------------------------------------
-	// 1. Data Fetching and Management
+	// 1. Hook for Data Fetching
 	// ---------------------------------------------
+	const { allCategories, categoryOptions, isLoading, totalCategories } =
+		useCategoriesData();
 
-	const [allCategories, setAllCategories] = useState(null);
-	const [isLoading, setIsLoading] = useState(true);
+	// ---------------------------------------------
+	// 2. Data Filtering/Preview
+	// ---------------------------------------------
+	const categoriesForPreview = getFilteredCategories(allCategories, attributes);
 
-	// Pagination Preview
-	const totalCategories = allCategories ? allCategories.length : 0;
+	// Pagination Preview Calc
 	const categoriesPerPage = categoriesToShow;
-	const maxPages = Math.ceil(totalCategories / categoriesPerPage);
+	const maxPages =
+		totalCategories > 0 ? Math.ceil(totalCategories / categoriesPerPage) : 1;
 
-	useEffect(() => {
-		// Fetch all product categories using the WooCommerce REST API endpoint
-		// NOTE: This assumes your site has WP_Store_API enabled and the current user has permission.
-		// The path is typically /wp-json/wc/v3/products/categories for v3, but we'll use the
-		// general structure for a Storefront/Store API implementation, which is often /wc/store/products/categories
-		// For demonstration, let's assume we use a simplified version:
-
-		const fetchCategories = async () => {
-			try {
-				// Fetching a large number just to get a comprehensive list for the selectors
-				const categories = await apiFetch({
-					path: "/wc/store/products/categories?per_page=100",
-					method: "GET",
-				});
-
-				setAllCategories(categories);
-			} catch (error) {
-				console.error("Error fetching product categories:", error);
-				setAllCategories([]); // Set to empty array on error
-			} finally {
-				setIsLoading(false);
-			}
-		};
-
-		fetchCategories();
-	}, []);
-
-	// Prepare options for SelectControl
-	const categoryOptions = allCategories
-		? allCategories.map((cat) => ({
-				label: cat.name + ` (${cat.count})`,
-				value: cat.id,
-		  }))
-		: [];
-
-	// Helper to handle the multi-select category IDs
-	const handleCategorySelection = (newIds, attributeName) => {
-		const numericIds = newIds
-			.map((id) => parseInt(id))
-			.filter((id) => !isNaN(id));
-		setAttributes({ [attributeName]: numericIds });
-	};
-
-	const CategorySelectControl = ({ label, attributeName, selectedIds }) => (
-		<BaseControl
-			label={label}
-			help={__("Select one or more categories.", "woo-builder")}
-		>
-			{isLoading ? (
-				<Spinner />
-			) : (
-				<select
-					multiple
-					value={selectedIds.map((id) => String(id))} // Map numbers back to strings for the select value
-					onChange={(event) => {
-						const selectedOptions = Array.from(event.target.options)
-							.filter((option) => option.selected)
-							.map((option) => option.value);
-						handleCategorySelection(selectedOptions, attributeName);
-					}}
-					style={{ minHeight: "150px", width: "100%" }}
-				>
-					{categoryOptions.map((option) => (
-						<option key={option.value} value={option.value}>
-							{option.label}
-						</option>
-					))}
-				</select>
-			)}
-		</BaseControl>
-	);
-
-	// Filter the categories that match the current block attributes for preview
-	const getFilteredCategories = () => {
-		if (!allCategories) return [];
-
-		let filtered = [...allCategories];
-
-		// 1. Filtering by Parent
-		if (parentFilter === "top-level") {
-			filtered = filtered.filter((cat) => cat.parent === 0);
-		} else if (parentFilter === "sub-categories") {
-			filtered = filtered.filter((cat) => cat.parent !== 0);
-		}
-
-		// 2. Filtering by Inclusion/Exclusion
-		if (selectedCategories.length > 0) {
-			filtered = filtered.filter((cat) => selectedCategories.includes(cat.id));
-		} else if (excludeCategories.length > 0) {
-			filtered = filtered.filter((cat) => !excludeCategories.includes(cat.id));
-		}
-
-		// 3. Sorting
-		filtered.sort((a, b) => {
-			let comparison = 0;
-			const aVal = a[orderBy];
-			const bVal = b[orderBy];
-
-			if (orderBy === "name") {
-				comparison = aVal.localeCompare(bVal);
-			} else {
-				// 'count' or 'id'
-				comparison = aVal - bVal;
-			}
-
-			return order === "asc" ? comparison : comparison * -1;
-		});
-
-		// 4. Limiting
-		filtered = filtered.slice(0, categoriesToShow);
-
-		return filtered;
-	};
-
-	const categoriesForPreview = getFilteredCategories();
-
+	// ---------------------------------------------
+	// 3. Render UI
+	// ---------------------------------------------
 	return (
 		<div {...blockProps}>
 			<InspectorControls>
+				{/* ... (Layout & Appearance PanelBody - remains the same) ... */}
 				<PanelBody title={__("Layout & Appearance", "woo-builder")}>
 					<SelectControl
 						label={__("Layout Style", "woo-builder")}
@@ -203,6 +100,8 @@ const Edit = ({ attributes, setAttributes }) => {
 					/>
 				</PanelBody>
 
+				{/* ----------------------------------- */}
+
 				<PanelBody
 					title={__("Filtering & Selection", "woo-builder")}
 					initialOpen={false}
@@ -216,15 +115,11 @@ const Edit = ({ attributes, setAttributes }) => {
 						min={1}
 						max={50}
 					/>
-
 					<SelectControl
 						label={__("Parent/Hierarchy Filter", "woo-builder")}
 						value={parentFilter}
 						options={[
-							{
-								label: __("Show All Categories", "woo-builder"),
-								value: "all",
-							},
+							{ label: __("Show All Categories", "woo-builder"), value: "all" },
 							{
 								label: __("Show Top-Level Only", "woo-builder"),
 								value: "top-level",
@@ -237,21 +132,30 @@ const Edit = ({ attributes, setAttributes }) => {
 						onChange={(newFilter) => setAttributes({ parentFilter: newFilter })}
 					/>
 
-					{/* IMPLEMENTED: Multi-Select for Inclusion */}
+					{/* REPLACED WITH REUSABLE COMPONENT */}
 					<CategorySelectControl
 						label={__("Include Specific Categories", "woo-builder")}
 						attributeName="selectedCategories"
 						selectedIds={selectedCategories}
+						categoryOptions={categoryOptions}
+						setAttributes={setAttributes}
+						isLoading={isLoading}
 					/>
 
-					{/* IMPLEMENTED: Multi-Select for Exclusion */}
+					{/* REPLACED WITH REUSABLE COMPONENT */}
 					<CategorySelectControl
 						label={__("Exclude Categories", "woo-builder")}
 						attributeName="excludeCategories"
 						selectedIds={excludeCategories}
+						categoryOptions={categoryOptions}
+						setAttributes={setAttributes}
+						isLoading={isLoading}
 					/>
 				</PanelBody>
 
+				{/* ----------------------------------- */}
+
+				{/* Sorting PanelBody - remains the same structure */}
 				<PanelBody title={__("Sorting", "woo-builder")} initialOpen={false}>
 					<SelectControl
 						label={__("Order By", "woo-builder")}
@@ -266,20 +170,20 @@ const Edit = ({ attributes, setAttributes }) => {
 						]}
 						onChange={(newOrderBy) => setAttributes({ orderBy: newOrderBy })}
 					/>
-
 					<SelectControl
 						label={__("Order Direction", "woo-builder")}
 						value={order}
 						options={[
 							{ label: __("Ascending (ASC)", "woo-builder"), value: "asc" },
-							{
-								label: __("Descending (DESC)", "woo-builder"),
-								value: "desc",
-							},
+							{ label: __("Descending (DESC)", "woo-builder"), value: "desc" },
 						]}
 						onChange={(newOrder) => setAttributes({ order: newOrder })}
 					/>
 				</PanelBody>
+
+				{/* ----------------------------------- */}
+
+				{/* Pagination Settings PanelBody - remains the same structure */}
 				<PanelBody
 					title={__("Pagination Settings", "your-textdomain")}
 					initialOpen={false}
@@ -303,7 +207,6 @@ const Edit = ({ attributes, setAttributes }) => {
 						]}
 						onChange={(newType) => setAttributes({ paginationType: newType })}
 					/>
-
 					{paginationType === "infinite" && (
 						<RangeControl
 							label={__("Scroll Threshold (px)", "your-textdomain")}
@@ -320,12 +223,16 @@ const Edit = ({ attributes, setAttributes }) => {
 							step={10}
 						/>
 					)}
-
 					<RangeControl
 						label={__("Categories Per Page", "your-textdomain")}
 						value={categoriesToShow}
+						disabled // Disabled since it's redundant with Categories to Show, but kept for preview calculation context
 					/>
 				</PanelBody>
+
+				{/* ----------------------------------- */}
+
+				{/* Image Settings PanelBody - remains the same structure */}
 				<PanelBody title={__("Image Settings", "woo-builder")}>
 					<SelectControl
 						label={__("Select Image Size", "woo-builder")}
@@ -335,18 +242,9 @@ const Edit = ({ attributes, setAttributes }) => {
 								label: __("Thumbnail (150px)", "woo-builder"),
 								value: "thumbnail",
 							},
-							{
-								label: __("Medium (300px)", "woo-builder"),
-								value: "medium",
-							},
-							{
-								label: __("Large (1024px)", "woo-builder"),
-								value: "large",
-							},
-							{
-								label: __("Full (Original)", "woo-builder"),
-								value: "full",
-							},
+							{ label: __("Medium (300px)", "woo-builder"), value: "medium" },
+							{ label: __("Large (1024px)", "woo-builder"), value: "large" },
+							{ label: __("Full (Original)", "woo-builder"), value: "full" },
 							{
 								label: __("WooCommerce Thumbnail", "woo-builder"),
 								value: "woocommerce_thumbnail",
@@ -354,9 +252,41 @@ const Edit = ({ attributes, setAttributes }) => {
 						]}
 						onChange={(newSize) => setAttributes({ imageSize: newSize })}
 					/>
+					<SelectControl
+						label={__("Missing Image Behavior", "woo-builder")}
+						value={placeholderBehavior}
+						options={[
+							{
+								label: __("Show Default Placeholder", "woo-builder"),
+								value: "default_icon",
+							},
+							{
+								label: __("Hide Missing Image Spot", "woo-builder"),
+								value: "hide_placeholder",
+							},
+							{
+								label: __("Use Custom Image URL", "woo-builder"),
+								value: "custom_image",
+							},
+						]}
+						onChange={(newBehavior) =>
+							setAttributes({ placeholderBehavior: newBehavior })
+						}
+					/>
+					{placeholderBehavior === "custom_image" && (
+						<TextControl
+							label={__("Custom Placeholder URL", "woo-builder")}
+							value={customPlaceholderUrl}
+							onChange={(newUrl) =>
+								setAttributes({ customPlaceholderUrl: newUrl })
+							}
+							help={__("Enter the URL of your default image.", "woo-builder")}
+						/>
+					)}
 				</PanelBody>
 			</InspectorControls>
 
+			{/* --- Block Preview Rendering (remains the same) --- */}
 			<div
 				className={`wp-block-woocommerce-categories-preview layout-${layoutStyle}`}
 			>
@@ -365,8 +295,7 @@ const Edit = ({ attributes, setAttributes }) => {
 				</h3>
 				<p style={{ textAlign: "center", fontSize: "12px", color: "#777" }}>
 					**Layout:** {layoutStyle} | **Columns:** {columns} | **Showing:**{" "}
-					{categoriesForPreview.length} of{" "}
-					{allCategories ? allCategories.length : 0}
+					{categoriesForPreview.length} of {totalCategories}{" "}
 					{maxPages > 1 && `(Page 1 of ${maxPages})`}
 				</p>
 
@@ -390,6 +319,7 @@ const Edit = ({ attributes, setAttributes }) => {
 				)}
 
 				{categoriesForPreview.length > 0 && (
+					// This section shows the live preview of filtered categories
 					<div
 						style={{
 							display: "grid",
@@ -411,29 +341,35 @@ const Edit = ({ attributes, setAttributes }) => {
 									backgroundColor: "#f9f9f9",
 								}}
 							>
-								{showImage && category.image && (
-									<img
-										src={category.image.thumbnail || category.image.src}
-										alt={category.name}
-										data-size={imageSize}
-										style={{
-											width: "100%",
-											height: "auto",
-											maxHeight: "100px",
-											objectFit: "cover",
-											marginBottom: "10px",
-										}}
-									/>
-								)}
-
+								{/* ... Category content preview (Image, Name, Count, Description) ... */}
+								{showImage &&
+									(category.image ? (
+										<img
+											src={category.image.thumbnail || category.image.src}
+											alt={category.name}
+											data-size={imageSize}
+											style={{
+												width: "100%",
+												height: "auto",
+												maxHeight: "100px",
+												objectFit: "cover",
+												marginBottom: "10px",
+											}}
+										/>
+									) : (
+										<CategoryPlaceholder
+											behavior={placeholderBehavior}
+											customUrl={customPlaceholderUrl}
+											name={category.name}
+											imageSize={imageSize}
+										/>
+									))}
 								<h4>{category.name}</h4>
-
 								{showCount && (
 									<p style={{ fontSize: "14px", color: "#555" }}>
 										({category.count} Products)
 									</p>
 								)}
-
 								{showDescription && category.description && (
 									<p
 										style={{
@@ -449,9 +385,8 @@ const Edit = ({ attributes, setAttributes }) => {
 						))}
 					</div>
 				)}
-				{/* ==================================================================== 
-        PAGINATION PREVIEW STARTS HERE
-        ==================================================================== */}
+
+				{/* --- Pagination Preview (remains the same) --- */}
 				{!isLoading && maxPages > 1 && (
 					<div style={{ marginTop: "20px", padding: "10px" }}>
 						{paginationType === "loadmore" && (
@@ -467,14 +402,13 @@ const Edit = ({ attributes, setAttributes }) => {
 									borderRadius: "4px",
 									cursor: "pointer",
 									fontWeight: "bold",
-									opacity: 0.8, // Indicate it's just a preview
+									opacity: 0.8,
 								}}
 								disabled
 							>
 								{__("Load More Categories (Preview)", "woo-builder")}
 							</button>
 						)}
-
 						{paginationType === "infinite" && (
 							<div
 								style={{
@@ -491,7 +425,6 @@ const Edit = ({ attributes, setAttributes }) => {
 								)}
 							</div>
 						)}
-
 						{paginationType === "number" && (
 							<div
 								style={{
@@ -500,7 +433,6 @@ const Edit = ({ attributes, setAttributes }) => {
 									gap: "5px",
 								}}
 							>
-								{/* Previous Button */}
 								<button
 									disabled
 									style={{
@@ -511,8 +443,6 @@ const Edit = ({ attributes, setAttributes }) => {
 								>
 									&laquo;
 								</button>
-
-								{/* Numbered Links (Current Page and next few) */}
 								<button
 									disabled
 									style={{
@@ -548,10 +478,7 @@ const Edit = ({ attributes, setAttributes }) => {
 										3
 									</button>
 								)}
-
 								{maxPages > 3 && <span>...</span>}
-
-								{/* Next Button */}
 								<button
 									disabled
 									style={{
@@ -566,9 +493,6 @@ const Edit = ({ attributes, setAttributes }) => {
 						)}
 					</div>
 				)}
-				{/* ==================================================================== 
-        PAGINATION PREVIEW ENDS HERE
-    ==================================================================== */}
 			</div>
 		</div>
 	);

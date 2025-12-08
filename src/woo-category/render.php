@@ -25,6 +25,8 @@ $include_ids     = $attributes['selectedCategories'] ?? [];
 $exclude_ids     = $attributes['excludeCategories'] ?? [];
 $parent_filter   = sanitize_key($attributes['parentFilter'] ?? 'all');
 $pagination_type = sanitize_key($attributes['paginationType'] ?? 'loadmore');
+$behavior   = $attributes['placeholderBehavior'] ?? 'default_icon';
+$custom_url = $attributes['customPlaceholderUrl'] ?? '';
 
 /*
 |--------------------------------------------------------------------------
@@ -121,6 +123,8 @@ if (is_wp_error($categories) || empty($categories)) {
             'categories' => $categories,
             'attributes' => $attributes,
             'is_ajax'    => false,
+            'behavior'   => $behavior, 
+            'custom_url' => $custom_url
         ]);
         ?>
     </div>

@@ -11,7 +11,11 @@ if (empty($is_ajax)) : ?>
 <ul class="product-category-list">
 <?php endif; ?>
 
-    <?php foreach ($categories as $category) : ?>
+    <?php foreach ($categories as $category) : 
+        $category_name = esc_html($category->name);
+        $category_link = esc_url(get_term_link($category));
+        ?>
+        
         <li class="product-category-item">
             <a href="<?php echo esc_url(get_term_link($category)); ?>">
 
@@ -24,6 +28,9 @@ if (empty($is_ajax)) : ?>
                             false,
                             ['class' => 'category-image']
                         );
+                    }
+                    else{
+                        echo get_woo_builder_get_placeholder_html( $behavior, $custom_url, $category_name );
                     }
                 endif; ?>
 
@@ -46,3 +53,4 @@ if (empty($is_ajax)) : ?>
 if (empty($is_ajax)) : ?>
 </ul>
 <?php endif;
+

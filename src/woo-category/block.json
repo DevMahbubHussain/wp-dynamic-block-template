@@ -75,6 +75,14 @@
 			"default": "thumbnail",
 			"enum": ["full", "medium", "thumbnail", "woocommerce_single"]
 		},
+		"placeholderBehavior": {
+			"type": "string",
+			"default": "default_icon"
+		},
+		"customPlaceholderUrl": {
+			"type": "string",
+			"default": null
+		},
 		"paginationType": {
 			"type": "string",
 			"default": "loadmore",
