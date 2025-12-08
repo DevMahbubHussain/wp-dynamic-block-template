@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App;
 
+use App\Ajax\Category;
+use App\Assets\Manager;
+
 defined('ABSPATH') || exit;
 
 final class Plugin
 {
+    const VERSION = '1.0';
 
     /**
      * SingleTone
@@ -31,9 +35,11 @@ final class Plugin
 
     private function define_constants()
     {
-        define('MH_ACADEMY_VERSION', '0.1.0');
+        define('MH_ACADEMY_VERSION', self::VERSION);
         define('MH_ACADEMY_PLUGIN_DIR', plugin_dir_path(__FILE__));
         define('MH_ACADEMY_PLUGIN_URL', plugin_dir_url(__FILE__));
+        define('MH_ACADEMY_PLUGIN_ROOT_DIR', plugin_dir_path(dirname(__FILE__)));
+
     }
 
     private function includes()
@@ -48,5 +54,10 @@ final class Plugin
         $hooks->register_blocks();
         $notice = new Notice(__FILE__);
         $notice->register();
+        $category = new Category();
+        $category->register();
+        $manager = new Manager();
+        $manager->register();
+
     }
 }

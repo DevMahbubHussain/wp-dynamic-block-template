@@ -74,6 +74,16 @@
 			"type": "string",
 			"default": "thumbnail",
 			"enum": ["full", "medium", "thumbnail", "woocommerce_single"]
+		},
+		"paginationType": {
+			"type": "string",
+			"default": "loadmore",
+			"enum": ["loadmore", "number", "infinite"]
+		},
+		"scrollThreshold": {
+			"type": "number",
+			"default": 100,
+			"minimum": 0
 		}
 	},
 	"textdomain": "mh-dynamic-block",

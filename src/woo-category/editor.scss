@@ -7,3 +7,76 @@
 .wp-block-my-plugin-mh-dynamic-block {
 	border: 1px dotted #f00;
 }
+
+
+
+/* --- Base Skeleton Container --- */
+.category-skeleton-container {
+    padding: 10px;
+}
+
+/* --- 1. Keyframes for the Animation --- */
+@keyframes pulse {
+    /* Define the movement of the gradient background */
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+
+/* --- 2. Skeleton Item Styling (Applies Animation) --- */
+.category-skeleton-item {
+    /* Base color */
+    background-color: #f6f7f8;
+    
+    /* Create the gradient "shimmer" effect */
+    background-image: linear-gradient(
+        to right,
+        #f6f7f8 0%,
+        #edeef1 20%, /* Lighter color to create the shimmer */
+        #f6f7f8 40%
+    );
+    
+    /* Set up the background size and repeat for animation */
+    background-repeat: repeat-y;
+    background-size: 400px 100%; /* Wider than the item for movement */
+    
+    /* Apply the animation */
+    animation: pulse 1.2s infinite;
+
+    /* General appearance */
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+/* --- 3. Placeholder Box Styling --- */
+/* These inner boxes get their color/animation from the parent .category-skeleton-item */
+.skeleton-box-img,
+.skeleton-box-title,
+.skeleton-box-count {
+    /* Match the parent background color for consistency */
+    background-color: #e0e0e0;
+    border-radius: 4px;
+}
+
+/* --- Common Height Definitions --- */
+.skeleton-box-img {
+    height: 100px; /* Placeholder for the category image */
+    width: 100%;
+    margin-bottom: 10px;
+    animation: pulse 1.2s infinite;
+    background-image: linear-gradient(
+        to right,
+        #f6f7f8 0%,
+        #edeef1 20%, /* Lighter color to create the shimmer */
+        #f6f7f8 40%
+    );
+}
+.skeleton-box-title {
+    height: 18px; 
+    width: 70%;
+    margin: 8px auto;
+}
+.skeleton-box-count {
+    height: 12px; /* Placeholder for the product count */
+    width: 40%;
+    margin: 8px auto 0;
+}

@@ -10,3 +10,280 @@
 	color: #fff;
 	padding: 2px;
 }
+
+
+.category-pagination-number ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 5px; /* Spacing between buttons */
+}
+.category-pagination-number li a,
+.category-pagination-number li .current {
+    display: block;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #333;
+    transition: background-color 0.2s;
+}
+.category-pagination-number li a:hover {
+    border-color: #007bff;
+    background-color: #f0f0f0;
+}
+.category-pagination-number li .current {
+    background-color: #007bff; /* Primary Brand Color */
+    color: white;
+    border-color: #007bff;
+    font-weight: bold;
+}
+
+.category-load-more-button {
+    display: block;
+    width: 300px; /* Specific width */
+    margin: 30px auto 20px; /* Center the button */
+    padding: 12px 25px;
+    background-color: #1e88e5; /* Primary Action Color */
+    color: white;
+    border: 2px solid #1e88e5;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.category-load-more-button:hover {
+    background-color: #1565c0;
+    border-color: #1565c0;
+}
+.category-load-more-button.loading {
+    background-color: #ccc;
+    color: #666;
+    border-color: #ccc;
+    cursor: wait;
+    pointer-events: none; /* Disable clicking while loading */
+    /* Add a subtle CSS spinner here if possible */
+}
+/* 1. Hide the triggering button visually but keep it accessible if using screen-reader-text
+*/
+.infinite-scroll-trigger.screen-reader-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+/* 2. The visible loading state should be a separate element controlled by JavaScript
+*/
+.category-loading-indicator {
+    text-align: center;
+    padding: 15px 0;
+    font-size: 14px;
+    color: #999;
+    /* Example for a simple spinner: */
+    /* You'd toggle the display property with JS */
+}
+/* --- Base Grid Container Style --- */
+.product-categories-inner.layout-grid .product-category-list {
+    display: grid;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 20px; /* Spacing between grid items */
+}
+
+/* --- Responsive Column Control (Dynamic Columns) --- */
+.product-categories-inner.layout-grid.columns-1 .product-category-list {
+    grid-template-columns: repeat(1, 1fr);
+}
+
+.product-categories-inner.layout-grid.columns-2 .product-category-list {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.product-categories-inner.layout-grid.columns-3 .product-category-list {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* Add more column counts (e.g., columns-4, columns-5) as needed */
+.product-categories-inner.layout-grid.columns-4 .product-category-list {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* --- Grid Item Appearance --- */
+.product-categories-inner.layout-grid .product-category-item {
+    text-align: center;
+    border: 1px solid #eee;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.product-categories-inner.layout-grid .product-category-item a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+}
+.product-categories-inner.layout-grid .category-image {
+    /* Styles for the category image in grid view (e.g., larger, aspect ratio) */
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+    object-fit: cover;
+    margin-bottom: 10px;
+}
+
+/* --- List Container Styles --- */
+.product-categories-inner.layout-list .product-category-list {
+    /* CRUCIAL: Override grid/flex settings from any default styles */
+    display: block; 
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* --- List Item Appearance (Single Row Flow) --- */
+.product-categories-inner.layout-list .product-category-item {
+    /* CRUCIAL: Ensure full width and vertical stacking */
+    width: 100%;
+    
+    border-bottom: 1px solid #eee;
+    padding: 15px 0;
+}
+.product-categories-inner.layout-list .product-category-item:last-child {
+    border-bottom: none;
+}
+
+/* Make the link content flow horizontally (Image | Name | Count) */
+.product-categories-inner.layout-list .product-category-item a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.15s;
+    padding: 5px;
+}
+.product-categories-inner.layout-list .product-category-item a:hover {
+    background-color: #f8f8f8;
+}
+
+/* Image on the left */
+.product-categories-inner.layout-list .category-image {
+    width: 60px; /* Small fixed size for the thumbnail */
+    height: 60px;
+    object-fit: cover;
+    margin-right: 15px;
+    border-radius: 4px;
+    /* Resetting any Grid style margins */
+    margin-bottom: 0; 
+}
+
+/* Text details on the right */
+.product-categories-inner.layout-list .category-name {
+    font-weight: 600;
+    flex-grow: 1; /* Pushes the count/description to the right */
+}
+.product-categories-inner.layout-list .product-count {
+    font-size: 14px;
+    color: #666;
+    margin-left: 15px;
+}
+
+
+/* --- Loading Indicator Style (General) --- */
+.wp-block-my-plugin-mh-dynamic-block .category-loading-indicator {
+    text-align: center;
+    padding: 15px 0;
+    font-size: 14px;
+    color: #999;
+    clear: both; /* Ensures it appears below floated/gridded content */
+}
+
+/* --- Simple CSS Spinner Example --- */
+.wp-block-my-plugin-mh-dynamic-block .loader-spinner {
+    border: 3px solid #f3f3f3; /* Light grey */
+    border-top: 3px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* --- Base Skeleton Container --- */
+.category-skeleton-container {
+    padding: 10px;
+}
+
+/* --- 1. Keyframes for the Animation --- */
+@keyframes pulse {
+    /* Define the movement of the gradient background */
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+
+/* --- 2. Skeleton Item Styling (Applies Animation) --- */
+.category-skeleton-item {
+    /* Base color */
+    background-color: #f6f7f8;
+    
+    /* Create the gradient "shimmer" effect */
+    background-image: linear-gradient(
+        to right,
+        #f6f7f8 0%,
+        #edeef1 20%, /* Lighter color to create the shimmer */
+        #f6f7f8 40%
+    );
+    
+    /* Set up the background size and repeat for animation */
+    background-repeat: repeat-y;
+    background-size: 400px 100%; /* Wider than the item for movement */
+    
+    /* Apply the animation */
+    animation: pulse 1.2s infinite;
+
+    /* General appearance */
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+/* --- 3. Placeholder Box Styling --- */
+/* These inner boxes get their color/animation from the parent .category-skeleton-item */
+.skeleton-box-img,
+.skeleton-box-title,
+.skeleton-box-count {
+    /* Match the parent background color for consistency */
+    background-color: #e0e0e0;
+    border-radius: 4px;
+}
+
+/* --- Common Height Definitions --- */
+.skeleton-box-img {
+    height: 100px; /* Placeholder for the category image */
+    width: 100%;
+    margin-bottom: 10px;
+}
+.skeleton-box-title {
+    height: 18px; /* Placeholder for the category name */
+    width: 70%;
+    margin: 8px auto;
+}
+.skeleton-box-count {
+    height: 12px; /* Placeholder for the product count */
+    width: 40%;
+    margin: 8px auto 0;
+}

@@ -21,3 +21,5 @@ Always validate and sanitize values, especially coming from user input
 2. CONSTRUCT THE  QUERY ARGS
 3. FETCH Data
 ```
+
+https://www.youtube.com/watch?v=WZJp1UsPrBQ

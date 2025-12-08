@@ -8,9 +8,9 @@ import {
 	BaseControl,
 } from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
-import { useSelect } from "@wordpress/data"; // Core hook for fetching data
-import apiFetch from "@wordpress/api-fetch"; // For custom API calls (though useSelect is preferred)
-import { useState, useEffect } from "@wordpress/element"; // For managing component state
+import apiFetch from "@wordpress/api-fetch";
+import { useState, useEffect } from "@wordpress/element";
+import CategorySkeleton from "./components/CategorySkeleton";
 
 // --- EDIT FUNCTION START ---
 const Edit = ({ attributes, setAttributes }) => {
@@ -25,9 +25,10 @@ const Edit = ({ attributes, setAttributes }) => {
 		showCount,
 		showDescription,
 		imageSize,
-		// We will manage selectedCategories and excludeCategories as arrays of IDs
 		selectedCategories,
 		excludeCategories,
+		paginationType,
+		scrollThreshold,
 	} = attributes;
 
 	const blockProps = useBlockProps();
@@ -38,6 +39,11 @@ const Edit = ({ attributes, setAttributes }) => {
 
 	const [allCategories, setAllCategories] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
+
+	// Pagination Preview
+	const totalCategories = allCategories ? allCategories.length : 0;
+	const categoriesPerPage = categoriesToShow;
+	const maxPages = Math.ceil(totalCategories / categoriesPerPage);
 
 	useEffect(() => {
 		// Fetch all product categories using the WooCommerce REST API endpoint
@@ -53,6 +59,7 @@ const Edit = ({ attributes, setAttributes }) => {
 					path: "/wc/store/products/categories?per_page=100",
 					method: "GET",
 				});
+
 				setAllCategories(categories);
 			} catch (error) {
 				console.error("Error fetching product categories:", error);
@@ -73,13 +80,8 @@ const Edit = ({ attributes, setAttributes }) => {
 		  }))
 		: [];
 
-	// ---------------------------------------------
-	// 2. Sidebar Controls Implementation
-	// ---------------------------------------------
-
 	// Helper to handle the multi-select category IDs
 	const handleCategorySelection = (newIds, attributeName) => {
-		// newIds comes as an array of strings (the category IDs). Convert to numbers.
 		const numericIds = newIds
 			.map((id) => parseInt(id))
 			.filter((id) => !isNaN(id));
@@ -89,7 +91,7 @@ const Edit = ({ attributes, setAttributes }) => {
 	const CategorySelectControl = ({ label, attributeName, selectedIds }) => (
 		<BaseControl
 			label={label}
-			help={__("Select one or more categories.", "your-textdomain")}
+			help={__("Select one or more categories.", "woo-builder")}
 		>
 			{isLoading ? (
 				<Spinner />
@@ -162,20 +164,20 @@ const Edit = ({ attributes, setAttributes }) => {
 	return (
 		<div {...blockProps}>
 			<InspectorControls>
-				<PanelBody title={__("Layout & Appearance", "your-textdomain")}>
+				<PanelBody title={__("Layout & Appearance", "woo-builder")}>
 					<SelectControl
-						label={__("Layout Style", "your-textdomain")}
+						label={__("Layout Style", "woo-builder")}
 						value={layoutStyle}
 						options={[
-							{ label: __("Grid", "your-textdomain"), value: "grid" },
-							{ label: __("List", "your-textdomain"), value: "list" },
-							{ label: __("Carousel", "your-textdomain"), value: "carousel" },
+							{ label: __("Grid", "woo-builder"), value: "grid" },
+							{ label: __("List", "woo-builder"), value: "list" },
+							{ label: __("Carousel", "woo-builder"), value: "carousel" },
 						]}
 						onChange={(newStyle) => setAttributes({ layoutStyle: newStyle })}
 					/>
 					{layoutStyle === "grid" && (
 						<RangeControl
-							label={__("Number of Columns", "your-textdomain")}
+							label={__("Number of Columns", "woo-builder")}
 							value={columns}
 							onChange={(newColumns) => setAttributes({ columns: newColumns })}
 							min={1}
@@ -183,17 +185,17 @@ const Edit = ({ attributes, setAttributes }) => {
 						/>
 					)}
 					<ToggleControl
-						label={__("Show Category Image", "your-textdomain")}
+						label={__("Show Category Image", "woo-builder")}
 						checked={showImage}
 						onChange={() => setAttributes({ showImage: !showImage })}
 					/>
 					<ToggleControl
-						label={__("Show Product Count", "your-textdomain")}
+						label={__("Show Product Count", "woo-builder")}
 						checked={showCount}
 						onChange={() => setAttributes({ showCount: !showCount })}
 					/>
 					<ToggleControl
-						label={__("Show Description", "your-textdomain")}
+						label={__("Show Description", "woo-builder")}
 						checked={showDescription}
 						onChange={() =>
 							setAttributes({ showDescription: !showDescription })
@@ -202,11 +204,11 @@ const Edit = ({ attributes, setAttributes }) => {
 				</PanelBody>
 
 				<PanelBody
-					title={__("Filtering & Selection", "your-textdomain")}
+					title={__("Filtering & Selection", "woo-builder")}
 					initialOpen={false}
 				>
 					<RangeControl
-						label={__("Categories to Show", "your-textdomain")}
+						label={__("Categories to Show", "woo-builder")}
 						value={categoriesToShow}
 						onChange={(newLimit) =>
 							setAttributes({ categoriesToShow: newLimit })
@@ -216,19 +218,19 @@ const Edit = ({ attributes, setAttributes }) => {
 					/>
 
 					<SelectControl
-						label={__("Parent/Hierarchy Filter", "your-textdomain")}
+						label={__("Parent/Hierarchy Filter", "woo-builder")}
 						value={parentFilter}
 						options={[
 							{
-								label: __("Show All Categories", "your-textdomain"),
+								label: __("Show All Categories", "woo-builder"),
 								value: "all",
 							},
 							{
-								label: __("Show Top-Level Only", "your-textdomain"),
+								label: __("Show Top-Level Only", "woo-builder"),
 								value: "top-level",
 							},
 							{
-								label: __("Show Sub-Categories Only", "your-textdomain"),
+								label: __("Show Sub-Categories Only", "woo-builder"),
 								value: "sub-categories",
 							},
 						]}
@@ -237,45 +239,120 @@ const Edit = ({ attributes, setAttributes }) => {
 
 					{/* IMPLEMENTED: Multi-Select for Inclusion */}
 					<CategorySelectControl
-						label={__("Include Specific Categories", "your-textdomain")}
+						label={__("Include Specific Categories", "woo-builder")}
 						attributeName="selectedCategories"
 						selectedIds={selectedCategories}
 					/>
 
 					{/* IMPLEMENTED: Multi-Select for Exclusion */}
 					<CategorySelectControl
-						label={__("Exclude Categories", "your-textdomain")}
+						label={__("Exclude Categories", "woo-builder")}
 						attributeName="excludeCategories"
 						selectedIds={excludeCategories}
 					/>
 				</PanelBody>
 
-				<PanelBody title={__("Sorting", "your-textdomain")} initialOpen={false}>
+				<PanelBody title={__("Sorting", "woo-builder")} initialOpen={false}>
 					<SelectControl
-						label={__("Order By", "your-textdomain")}
+						label={__("Order By", "woo-builder")}
 						value={orderBy}
 						options={[
 							{
-								label: __("Name (Alphabetical)", "your-textdomain"),
+								label: __("Name (Alphabetical)", "woo-builder"),
 								value: "name",
 							},
-							{ label: __("Product Count", "your-textdomain"), value: "count" },
-							{ label: __("ID", "your-textdomain"), value: "id" },
+							{ label: __("Product Count", "woo-builder"), value: "count" },
+							{ label: __("ID", "woo-builder"), value: "id" },
 						]}
 						onChange={(newOrderBy) => setAttributes({ orderBy: newOrderBy })}
 					/>
 
 					<SelectControl
-						label={__("Order Direction", "your-textdomain")}
+						label={__("Order Direction", "woo-builder")}
 						value={order}
 						options={[
-							{ label: __("Ascending (ASC)", "your-textdomain"), value: "asc" },
+							{ label: __("Ascending (ASC)", "woo-builder"), value: "asc" },
 							{
-								label: __("Descending (DESC)", "your-textdomain"),
+								label: __("Descending (DESC)", "woo-builder"),
 								value: "desc",
 							},
 						]}
 						onChange={(newOrder) => setAttributes({ order: newOrder })}
+					/>
+				</PanelBody>
+				<PanelBody
+					title={__("Pagination Settings", "your-textdomain")}
+					initialOpen={false}
+				>
+					<SelectControl
+						label={__("Pagination Type", "your-textdomain")}
+						value={paginationType}
+						options={[
+							{
+								label: __("Load More Button (AJAX)", "your-textdomain"),
+								value: "loadmore",
+							},
+							{
+								label: __("Standard Numbered Pages", "your-textdomain"),
+								value: "number",
+							},
+							{
+								label: __("Infinite Scroll (AJAX)", "your-textdomain"),
+								value: "infinite",
+							},
+						]}
+						onChange={(newType) => setAttributes({ paginationType: newType })}
+					/>
+
+					{paginationType === "infinite" && (
+						<RangeControl
+							label={__("Scroll Threshold (px)", "your-textdomain")}
+							help={__(
+								"Distance from the bottom to trigger auto-load.",
+								"your-textdomain",
+							)}
+							value={scrollThreshold}
+							onChange={(newValue) =>
+								setAttributes({ scrollThreshold: newValue })
+							}
+							min={50}
+							max={500}
+							step={10}
+						/>
+					)}
+
+					<RangeControl
+						label={__("Categories Per Page", "your-textdomain")}
+						value={categoriesToShow}
+					/>
+				</PanelBody>
+				<PanelBody title={__("Image Settings", "woo-builder")}>
+					<SelectControl
+						label={__("Select Image Size", "woo-builder")}
+						value={imageSize}
+						options={[
+							{
+								label: __("Thumbnail (150px)", "woo-builder"),
+								value: "thumbnail",
+							},
+							{
+								label: __("Medium (300px)", "woo-builder"),
+								value: "medium",
+							},
+							{
+								label: __("Large (1024px)", "woo-builder"),
+								value: "large",
+							},
+							{
+								label: __("Full (Original)", "woo-builder"),
+								value: "full",
+							},
+							{
+								label: __("WooCommerce Thumbnail", "woo-builder"),
+								value: "woocommerce_thumbnail",
+							},
+						]}
+						onChange={(newSize) => setAttributes({ imageSize: newSize })}
 					/>
 				</PanelBody>
 			</InspectorControls>
@@ -284,20 +361,22 @@ const Edit = ({ attributes, setAttributes }) => {
 				className={`wp-block-woocommerce-categories-preview layout-${layoutStyle}`}
 			>
 				<h3 style={{ textAlign: "center" }}>
-					{__("WooCommerce Product Categories Preview", "your-textdomain")}
+					{__("WooCommerce Product Categories Preview", "woo-builder")}
 				</h3>
 				<p style={{ textAlign: "center", fontSize: "12px", color: "#777" }}>
 					**Layout:** {layoutStyle} | **Columns:** {columns} | **Showing:**{" "}
 					{categoriesForPreview.length} of{" "}
 					{allCategories ? allCategories.length : 0}
+					{maxPages > 1 && `(Page 1 of ${maxPages})`}
 				</p>
 
 				{isLoading && (
-					<div style={{ textAlign: "center", padding: "20px" }}>
-						<Spinner /> Loading Categories...
-					</div>
+					<CategorySkeleton
+						count={parseInt(categoriesToShow) || 6}
+						layoutStyle={layoutStyle}
+						columns={columns}
+					/>
 				)}
-
 				{!isLoading && categoriesForPreview.length === 0 && (
 					<div
 						style={{
@@ -336,6 +415,7 @@ const Edit = ({ attributes, setAttributes }) => {
 									<img
 										src={category.image.thumbnail || category.image.src}
 										alt={category.name}
+										data-size={imageSize}
 										style={{
 											width: "100%",
 											height: "auto",
@@ -369,6 +449,126 @@ const Edit = ({ attributes, setAttributes }) => {
 						))}
 					</div>
 				)}
+				{/* ==================================================================== 
+        PAGINATION PREVIEW STARTS HERE
+        ==================================================================== */}
+				{!isLoading && maxPages > 1 && (
+					<div style={{ marginTop: "20px", padding: "10px" }}>
+						{paginationType === "loadmore" && (
+							<button
+								style={{
+									display: "block",
+									width: "250px",
+									margin: "10px auto",
+									padding: "10px 20px",
+									backgroundColor: "#1e88e5",
+									color: "white",
+									border: "none",
+									borderRadius: "4px",
+									cursor: "pointer",
+									fontWeight: "bold",
+									opacity: 0.8, // Indicate it's just a preview
+								}}
+								disabled
+							>
+								{__("Load More Categories (Preview)", "woo-builder")}
+							</button>
+						)}
+
+						{paginationType === "infinite" && (
+							<div
+								style={{
+									textAlign: "center",
+									padding: "10px",
+									fontSize: "14px",
+									color: "#888",
+								}}
+							>
+								<Spinner style={{ marginRight: "5px" }} />
+								{__(
+									"Infinite Scroll Active (Loading next page when user scrolls)",
+									"woo-builder",
+								)}
+							</div>
+						)}
+
+						{paginationType === "number" && (
+							<div
+								style={{
+									display: "flex",
+									justifyContent: "center",
+									gap: "5px",
+								}}
+							>
+								{/* Previous Button */}
+								<button
+									disabled
+									style={{
+										padding: "8px 12px",
+										border: "1px solid #ccc",
+										background: "#f0f0f0",
+									}}
+								>
+									&laquo;
+								</button>
+
+								{/* Numbered Links (Current Page and next few) */}
+								<button
+									disabled
+									style={{
+										padding: "8px 12px",
+										border: "1px solid #ccc",
+										background: "#007bff",
+										color: "white",
+									}}
+								>
+									1
+								</button>
+								{maxPages >= 2 && (
+									<button
+										disabled
+										style={{
+											padding: "8px 12px",
+											border: "1px solid #ccc",
+											background: "white",
+										}}
+									>
+										2
+									</button>
+								)}
+								{maxPages >= 3 && (
+									<button
+										disabled
+										style={{
+											padding: "8px 12px",
+											border: "1px solid #ccc",
+											background: "white",
+										}}
+									>
+										3
+									</button>
+								)}
+
+								{maxPages > 3 && <span>...</span>}
+
+								{/* Next Button */}
+								<button
+									disabled
+									style={{
+										padding: "8px 12px",
+										border: "1px solid #ccc",
+										background: "#f0f0f0",
+									}}
+								>
+									&raquo;
+								</button>
+							</div>
+						)}
+					</div>
+				)}
+				{/* ==================================================================== 
+        PAGINATION PREVIEW ENDS HERE
+    ==================================================================== */}
 			</div>
 		</div>
 	);
