@@ -16,5 +16,6 @@ class Hooks{
        $block_manager->register_blocks();
        $block_category = new BlockCategory();
        $block_category->register();
+       wbb_clear_category_transients();
     }
 }

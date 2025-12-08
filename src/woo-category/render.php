@@ -28,6 +28,14 @@ $pagination_type = sanitize_key($attributes['paginationType'] ?? 'loadmore');
 $behavior   = $attributes['placeholderBehavior'] ?? 'default_icon';
 $custom_url = $attributes['customPlaceholderUrl'] ?? '';
 
+
+//  START OF CACHING LOGIC //
+// Define a default cache lifetime (e.g., 1 hour)
+$cache_lifetime = HOUR_IN_SECONDS;
+// Define the base transient key
+$transient_base = 'wbb_woo_categories_';
+
+
 /*
 |--------------------------------------------------------------------------
 | Base get_terms() arguments
@@ -67,31 +75,46 @@ $offset              = 0;
 if ($pagination_type === 'number') {
     $current_page = max(1, get_query_var('paged'));
     $offset       = ($current_page - 1) * $categories_per_page;
-
-    $args['offset'] = $offset;
-
-// Loadmore & infinite scroll always start at the first page
-} else {
-    $args['offset'] = 0;
 }
+
+$total_count_transient_key = $transient_base . 'total_count_for_args_' . md5(serialize($args));
+
 
 /*
 |--------------------------------------------------------------------------
 | Get total count (must ignore offset and number)
 |--------------------------------------------------------------------------
 */
-$all_categories_args = array_merge(
-    $args,
-    [
-        'number' => 99999,
-        'offset' => 0,
-        'paged'  => false,
-    ]
-);
+$cached_data = get_transient($total_count_transient_key);
 
-$all_categories = get_terms($all_categories_args);
-$total_count    = count($all_categories);
-$max_pages      = ceil($total_count / $categories_per_page);
+if (false === $cached_data) {
+    // Data is NOT cached: Run the full query
+    $all_categories_args = array_merge(
+        $args,
+        [
+            'number' => 99999,
+            'offset' => 0,
+            'paged'  => false,
+        ]
+    );
+
+    $all_categories = get_terms($all_categories_args);
+    $total_count    = count($all_categories);
+    $max_pages      = ceil($total_count / $categories_per_page);
+
+    // Store the results in the cache
+    $cached_data = [
+        'total_count' => $total_count,
+        'max_pages'   => $max_pages,
+    ];
+    set_transient($cache_key, $cached_data, $cache_lifetime);
+} else {
+    $total_count = $cached_data['total_count'];
+    $max_pages   = $cached_data['max_pages'];
+}
+$args['offset'] = $offset;
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -116,24 +139,24 @@ if (is_wp_error($categories) || empty($categories)) {
 
 
 <div <?php echo get_block_wrapper_attributes(); ?>>
-<div class="product-categories-inner layout-control layout-<?php echo esc_attr($layout); ?> columns-<?php echo esc_attr($columns); ?>">
-    <div class="category-listing-container">
+    <div class="product-categories-inner layout-control layout-<?php echo esc_attr($layout); ?> columns-<?php echo esc_attr($columns); ?>">
+        <div class="category-listing-container">
+            <?php
+            echo TemplateLoader::get('category-loop.php', [
+                'categories' => $categories,
+                'attributes' => $attributes,
+                'is_ajax'    => false,
+                'behavior'   => $behavior,
+                'custom_url' => $custom_url
+            ]);
+            ?>
+        </div>
+
         <?php
-        echo TemplateLoader::get('category-loop.php', [
-            'categories' => $categories,
-            'attributes' => $attributes,
-            'is_ajax'    => false,
-            'behavior'   => $behavior, 
-            'custom_url' => $custom_url
-        ]);
+        // Include pagination/load-more template if needed
+        if (file_exists($templates . '/load-more-button.php')) {
+            include $templates . '/load-more-button.php';
+        }
         ?>
     </div>
-
-    <?php
-    // Include pagination/load-more template if needed
-    if (file_exists($templates . '/load-more-button.php')) {
-        include $templates . '/load-more-button.php';
-    }
-    ?>
-</div>
 </div>
