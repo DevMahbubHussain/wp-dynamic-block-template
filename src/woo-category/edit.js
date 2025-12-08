@@ -14,6 +14,7 @@ import { getFilteredCategories } from "./utils/categoryUtils";
 import CategorySelectControl from "./components/CategorySelectControl";
 import CategorySkeleton from "./components/CategorySkeleton";
 import CategoryPlaceholder from "../components/CategoryPlaceholder";
+import { TextControl } from "@wordpress/components";
 
 // --- EDIT FUNCTION START ---
 const Edit = ({ attributes, setAttributes }) => {
